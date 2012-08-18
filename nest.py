@@ -17,6 +17,7 @@
 #    Chris Burris's Siri Nest Proxy was very helpful to learn the nest's
 #       authentication and some bits of the protocol.
 
+import time
 import urllib
 import urllib2
 import sys
@@ -131,7 +132,26 @@ class Nest:
 
     def set_fan(self, state):
         data = '{"fan_mode":"' + str(state) + '"}'
+	print data
         req = urllib2.Request(self.transport_url + "/v2/put/device." + self.serial,
+                              data,
+                              {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
+                               "Authorization":"Basic " + self.access_token,
+                               "X-nl-protocol-version": "1"})
+
+        res = urllib2.urlopen(req).read()
+
+        print res
+
+    def set_away(self, state):
+	time_since_epoch   = time.time()
+	# time_since_epoch   = 1345299535
+        if (state == "away"):
+		data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":true,"away_setter":0}'
+	else:
+        	data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":false,"away_setter":0}'
+	print data
+        req = urllib2.Request(self.transport_url + "/v2/put/structure." + self.structure_id,
                               data,
                               {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
                                "Authorization":"Basic " + self.access_token,
@@ -161,7 +181,6 @@ def create_parser():
    parser.add_option("-i", "--index", dest="index", default=0, type="int",
                      help="optional, specify index number of nest to talk to")
 
-
    return parser
 
 def help():
@@ -177,6 +196,7 @@ def help():
     print "commands: temp, fan, show, curtemp, curhumid"
     print "    temp <temperature>    ... set target temperature"
     print "    fan [auto|on]         ... set fan state"
+    print "    away [away|here]         ... set away state"
     print "    show                  ... show everything"
     print "    curtemp               ... print current temperature"
     print "    curhumid              ... print current humidity"
@@ -224,6 +244,8 @@ def main():
         n.show_curtemp()
     elif (cmd == "curhumid"):
         print n.status["device"][n.serial]["current_humidity"]
+    elif (cmd == "away"):
+        n.set_away(args[1])
     else:
         print "misunderstood command:", cmd
         print "do 'nest.py help' for help"
