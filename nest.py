@@ -107,7 +107,10 @@ class Nest:
         allvars.update(device)
 
         for k in sorted(allvars.keys()):
-            print k + "."*(32-len(k)) + ":", allvars[k]
+           v = allvars[k]
+           if 'temp' in k and isinstance(v, float):
+               v = self.temp_out(v)
+           print k + "."*(32-len(k)) + ":", v
 
     def show_curtemp(self):
         temp = self.status["shared"][self.serial]["current_temperature"]
