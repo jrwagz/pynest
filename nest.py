@@ -212,7 +212,7 @@ def main():
         if len(args)<2:
             print "please specify a temperature"
             sys.exit(-1)
-        n.set_temperature(int(args[1]))
+        n.set_temperature(float(args[1]))
     elif (cmd == "fan"):
         if len(args)<2:
             print "please specify a fan state of 'on' or 'auto'"
