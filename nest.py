@@ -23,14 +23,14 @@ import sys
 from optparse import OptionParser
 
 try:
-   import json
+    import json
 except ImportError:
-   try:
-       import simplejson as json
-   except ImportError:
-       print "No json library available. I recommend installing either python-json"
-       print "or simpejson."
-       sys.exit(-1)
+    try:
+        import simplejson as json
+    except ImportError:
+        print "No json library available. I recommend installing either python-json"
+        print "or simpejson."
+        sys.exit(-1)
 
 class Nest:
     def __init__(self, username, password, serial=None, index=0, units="F"):
@@ -107,7 +107,7 @@ class Nest:
         allvars.update(device)
 
         for k in sorted(allvars.keys()):
-             print k + "."*(32-len(k)) + ":", allvars[k]
+            print k + "."*(32-len(k)) + ":", allvars[k]
 
     def show_curtemp(self):
         temp = self.status["shared"][self.serial]["current_temperature"]
