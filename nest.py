@@ -103,6 +103,11 @@ class Nest:
     def show_status(self):
         shared = self.status["shared"][self.serial]
         device = self.status["device"][self.serial]
+        structure = self.status["structure"][self.structure_id]
+
+        # Delete the structure name so that we preserve the device name
+        del structure["name"]
+        allvars.update(structure)
 
         allvars = shared
         allvars.update(device)
