@@ -155,7 +155,7 @@ class Nest:
 		data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":true,"away_setter":0}'
 	else:
         	data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":false,"away_setter":0}'
-	print data
+	#print data
         req = urllib2.Request(self.transport_url + "/v2/put/structure." + self.structure_id,
                               data,
                               {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
