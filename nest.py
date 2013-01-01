@@ -114,10 +114,9 @@ class Nest:
 
         allvars.update(device)
 
-        pattern = re.compile(".+temperature$|.+_temp$|.+_high$|.+_low$")
         for k in sorted(allvars.keys()):
            extra = allvars[k]
-           if 'temp' in k and isinstance(extra, float):
+           if 'temp' in k and isinstance(extra, float) and self.units == "F":
                extra = "(" + str(self.temp_out(extra)) + "F)"
            else:
                extra = ""
