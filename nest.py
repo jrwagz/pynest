@@ -25,14 +25,14 @@ import re
 from optparse import OptionParser
 
 try:
-   import json
+    import json
 except ImportError:
-   try:
-       import simplejson as json
-   except ImportError:
-       print "No json library available. I recommend installing either python-json"
-       print "or simpejson."
-       sys.exit(-1)
+    try:
+        import simplejson as json
+    except ImportError:
+        print "No json library available. I recommend installing either python-json"
+        print "or simpejson."
+        sys.exit(-1)
 
 class Nest:
     def __init__(self, username, password, serial=None, index=0, units="F"):
@@ -116,14 +116,12 @@ class Nest:
 
         pattern = re.compile(".+temperature$|.+_temp$|.+_high$|.+_low$")
         for k in sorted(allvars.keys()):
-             # If the key ends in "temperature", "_temp", "_high", or
-             # "_low" and the units is F, then print the converted
-             # temp, too
-             if (pattern.match(k) and self.units == "F"):
-                temp = self.temp_out(allvars[k])
-                print k + "."*(32-len(k)) + ":", allvars[k], "(" + str(temp) + "F)"
-             else:
-                print k + "."*(32-len(k)) + ":", allvars[k]
+           extra = allvars[k]
+           if 'temp' in k and isinstance(extra, float):
+               extra = "(" + str(self.temp_out(extra)) + "F)"
+           else:
+               extra = ""
+           print k + "."*(32-len(k)) + ":", allvars[k], extra
 
     def show_curtemp(self):
         temp = self.status["shared"][self.serial]["current_temperature"]
@@ -247,7 +245,7 @@ def main():
         if len(args)<2:
             print "please specify a temperature"
             sys.exit(-1)
-        n.set_temperature(int(args[1]))
+        n.set_temperature(float(args[1]))
     elif (cmd == "fan"):
         if len(args)<2:
             print "please specify a fan state of 'on' or 'auto'"
