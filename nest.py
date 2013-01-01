@@ -21,6 +21,7 @@ import time
 import urllib
 import urllib2
 import sys
+import re
 from optparse import OptionParser
 
 try:
@@ -113,8 +114,16 @@ class Nest:
 
         allvars.update(device)
 
+        pattern = re.compile(".+temperature$|.+_temp$|.+_high$|.+_low$")
         for k in sorted(allvars.keys()):
-             print k + "."*(32-len(k)) + ":", allvars[k]
+             # If the key ends in "temperature", "_temp", "_high", or
+             # "_low" and the units is F, then print the converted
+             # temp, too
+             if (pattern.match(k) and self.units == "F"):
+                temp = self.temp_out(allvars[k])
+                print k + "."*(32-len(k)) + ":", allvars[k], "(" + str(temp) + "F)"
+             else:
+                print k + "."*(32-len(k)) + ":", allvars[k]
 
     def show_curtemp(self):
         temp = self.status["shared"][self.serial]["current_temperature"]
