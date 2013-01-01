@@ -105,11 +105,12 @@ class Nest:
         device = self.status["device"][self.serial]
         structure = self.status["structure"][self.structure_id]
 
+        allvars = shared
+
         # Delete the structure name so that we preserve the device name
         del structure["name"]
         allvars.update(structure)
 
-        allvars = shared
         allvars.update(device)
 
         for k in sorted(allvars.keys()):
