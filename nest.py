@@ -34,12 +34,13 @@ except ImportError:
        sys.exit(-1)
 
 class Nest:
-    def __init__(self, username, password, serial=None, index=0, units="F"):
+    def __init__(self, username, password, serial=None, index=0, units="F", debug=False):
         self.username = username
         self.password = password
         self.serial = serial
         self.units = units
         self.index = index
+        self.debug = debug
 
     def loads(self, res):
         if hasattr(json, "loads"):
@@ -132,7 +133,10 @@ class Nest:
 
     def set_fan(self, state):
         data = '{"fan_mode":"' + str(state) + '"}'
-	print data
+
+	if (self.debug):
+		print data
+
         req = urllib2.Request(self.transport_url + "/v2/put/device." + self.serial,
                               data,
                               {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
@@ -144,7 +148,6 @@ class Nest:
         print res
 
     def set_mode(self, state):
-	print "setting mode " + state
         data = '{"target_temperature_type":"' + str(state) + '"}'
         req = urllib2.Request(self.transport_url + "/v2/put/shared." + self.serial, data, {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4", "Authorization":"Basic " + self.access_token, "X-nl-protocol-version": "1"})
 
@@ -159,7 +162,10 @@ class Nest:
 		data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":true,"away_setter":0}'
 	else:
         	data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":false,"away_setter":0}'
-	print data
+
+	if (self.debug):
+		print data
+
         req = urllib2.Request(self.transport_url + "/v2/put/structure." + self.structure_id,
                               data,
                               {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
@@ -186,6 +192,9 @@ def create_parser():
 
    parser.add_option("-s", "--serial", dest="serial", default=None,
                      help="optional, specify serial number of nest thermostat to talk to")
+
+   parser.add_option("-d", "--debug", dest="debug", action="store_true", default=False,
+                     help="Print debug information")
 
    parser.add_option("-i", "--index", dest="index", default=0, type="int",
                      help="optional, specify index number of nest to talk to")
@@ -232,7 +241,7 @@ def main():
     else:
         units = "F"
 
-    n = Nest(opts.user, opts.password, opts.serial, opts.index, units=units)
+    n = Nest(opts.user, opts.password, opts.serial, opts.index, units=units, debug=opts.debug)
     n.login()
     n.get_status()
 
