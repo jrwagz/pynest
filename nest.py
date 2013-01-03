@@ -114,13 +114,23 @@ class Nest:
 
         allvars.update(device)
 
-        for k in sorted(allvars.keys()):
-           extra = allvars[k]
-           if 'temp' in k and isinstance(extra, float) and self.units == "F":
-               extra = "(" + str(self.temp_out(extra)) + "F)"
-           else:
-               extra = ""
-           print k + "."*(32-len(k)) + ":", allvars[k], extra
+        for k, v in sorted(allvars.items()):
+           print k + "."*(32-len(k)) + ":", self.format_value(k, v)
+
+    def format_value(self, key, value):
+        if 'temp' in key and isinstance(value, float) and self.units == 'F':
+            return '%s (%s F)' % (value, self.temp_out(value))
+
+        elif 'timestamp' in key or key == 'creation_time':
+            if value > 0xffffffff:
+                value /= 1000
+            return time.ctime(value) 
+
+        elif key == 'mac_address' and len(value) == 12:
+            return ':'.join(value[i:i+2] for i in xrange(0, 12, 2))
+
+        else:
+            return str(value)
 
     def show_curtemp(self):
         temp = self.status["shared"][self.serial]["current_temperature"]
