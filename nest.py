@@ -254,7 +254,7 @@ def main():
             sys.exit(-1)
         n.set_temperature(int(args[1]))
     elif (cmd == "fan"):
-        if len(args)<2:
+        if len(args)<2 or args[1] not in {"on", "auto"}:
             print "please specify a fan state of 'on' or 'auto'"
             sys.exit(-1)
         n.set_fan(args[1])
