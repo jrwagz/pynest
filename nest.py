@@ -259,7 +259,7 @@ def main():
             sys.exit(-1)
         n.set_fan(args[1])
     elif (cmd == "mode"):
-        if len(args)<2:
+        if len(args)<2 or args[1] not in {"cool", "heat", "range"}:
             print "please specify a thermostat mode of 'cool', 'heat'  or 'range'"
             sys.exit(-1)
         n.set_mode(args[1])
