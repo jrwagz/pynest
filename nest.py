@@ -53,6 +53,9 @@ class Nest:
 
     # context ['shared','structure','device']
     def handle_put(self, context, data):
+        assert context is not None, "Context must be set to ['shared','structure','device']"
+        assert data is not None, "Data is None"
+
         new_url = self.transport_url + "/v2/put/" + context + "."
 
         if (context == "shared" or context == "device"):
@@ -60,17 +63,18 @@ class Nest:
         elif (context == "structure"):
             new_url += self.structure_id
         else:
-            print "Error:" + context+ " incorrect context sent to handle_put."
-            print " context ['shared','structure','device']"
-            res = None
+            raise ValueError, context+ " is unsupported"
+
 
         req = urllib2.Request(new_url, data, self.headers)
 
-        res = urllib2.urlopen(req).read()
-
-        #TODO move print to debug and handle failures
-        print res
-	    # return res
+        try:
+            urllib2.urlopen(req).read()
+        except urllib2.URLError:
+            print "Put operation failed"
+            if (self.debug):
+                print new_url
+                print data
 
     def shared_put(self, data):
         self.handle_put("shared", data)
@@ -133,10 +137,10 @@ class Nest:
     def show_status(self):
         shared = self.status["shared"][self.serial]
         device = self.status["device"][self.serial]
-	structure = self.status["structure"][self.structure_id]
+        structure = self.status["structure"][self.structure_id]
 
-	#Delete the structure name so that we preserve the device name
-	del structure["name"]
+	    #Delete the structure name so that we preserve the device name
+        del structure["name"]
         allvars = shared
 
         allvars.update(structure)
@@ -153,16 +157,11 @@ class Nest:
 
     def set_temperature(self, temp):
         temp = self.temp_in(temp)
-
         data = '{"target_change_pending":true,"target_temperature":' + '%0.1f' % temp + '}'
         self.shared_put(data)
 
     def set_fan(self, state):
         data = '{"fan_mode":"' + str(state) + '"}'
-
-	if (self.debug):
-		print data
-
         self.device_put(data)
 
     def set_mode(self, state):
@@ -170,15 +169,11 @@ class Nest:
         self.shared_put(data)
 
     def set_away(self, state):
-	time_since_epoch   = time.time()
-	# time_since_epoch   = 1345299535
+        time_since_epoch   = time.time()
         if (state == "away"):
-		data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":true,"away_setter":0}'
-	else:
-        	data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":false,"away_setter":0}'
-
-	if (self.debug):
-		print data
+            data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":true,"away_setter":0}'
+        else:
+            data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":false,"away_setter":0}'
 
         self.structure_put(data)
 
