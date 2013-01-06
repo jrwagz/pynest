@@ -225,6 +225,15 @@ def help():
     print "    nest.py --user joe@user.com --password swordfish temp 73"
     print "    nest.py --user joe@user.com --password swordfish fan auto"
 
+def validate_temp(temp):
+        try: 
+            new_temp = float(temp)
+        except ValueError:
+            return -1
+        if new_temp < 50 or new_temp > 90:
+            return -1
+        return new_temp
+            
 def main():
     parser = create_parser()
     (opts, args) = parser.parse_args()
@@ -249,10 +258,13 @@ def main():
     cmd = args[0]
 
     if (cmd == "temp"):
-        if len(args)<2:
-            print "please specify a temperature"
+        new_temp = -1
+        if len(args)>1:
+            new_temp = validate_temp(args[1])
+        if new_temp == -1:
+            print "please specify a temperature between 50 and 90"
             sys.exit(-1)
-        n.set_temperature(int(args[1]))
+        n.set_temperature(new_temp)
     elif (cmd == "fan"):
         if len(args)<2 or args[1] not in {"on", "auto"}:
             print "please specify a fan state of 'on' or 'auto'"
