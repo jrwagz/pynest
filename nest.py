@@ -282,6 +282,9 @@ def main():
     elif (cmd == "curhumid"):
         print n.status["device"][n.serial]["current_humidity"]
     elif (cmd == "away"):
+        if len(args)<2 or args[1] not in {"away", "here"}:
+            print "please specify a state of 'away' or 'here'"
+            sys.exit(-1)
         n.set_away(args[1])
     else:
         print "misunderstood command:", cmd
