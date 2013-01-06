@@ -41,6 +41,8 @@ class Nest:
         self.units = units
         self.index = index
         self.debug = debug
+        self.headers={"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
+                      "X-nl-protocol-version": "1"}
 
     def loads(self, res):
         if hasattr(json, "loads"):
@@ -53,23 +55,20 @@ class Nest:
         data = urllib.urlencode({"username": self.username, "password": self.password})
 
         req = urllib2.Request("https://home.nest.com/user/login",
-                              data,
-                              {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4"})
+                              data, self.headers)
 
         res = urllib2.urlopen(req).read()
 
         res = self.loads(res)
 
         self.transport_url = res["urls"]["transport_url"]
-        self.access_token = res["access_token"]
         self.userid = res["userid"]
+        self.headers["Authorization"] = "Basic " + res["access_token"]
+        self.headers["X-nl-user-id"]= self.userid
 
     def get_status(self):
         req = urllib2.Request(self.transport_url + "/v2/mobile/user." + self.userid,
-                              headers={"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
-                                       "Authorization":"Basic " + self.access_token,
-                                       "X-nl-user-id": self.userid,
-                                       "X-nl-protocol-version": "1"})
+                              headers=self.headers)
 
         res = urllib2.urlopen(req).read()
 
@@ -127,10 +126,7 @@ class Nest:
 
         data = '{"target_change_pending":true,"target_temperature":' + '%0.1f' % temp + '}'
         req = urllib2.Request(self.transport_url + "/v2/put/shared." + self.serial,
-                              data,
-                              {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
-                               "Authorization":"Basic " + self.access_token,
-                               "X-nl-protocol-version": "1"})
+                              data, self.headers)
 
         res = urllib2.urlopen(req).read()
 
@@ -143,10 +139,7 @@ class Nest:
 		print data
 
         req = urllib2.Request(self.transport_url + "/v2/put/device." + self.serial,
-                              data,
-                              {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
-                               "Authorization":"Basic " + self.access_token,
-                               "X-nl-protocol-version": "1"})
+                              data, self.headers)
 
         res = urllib2.urlopen(req).read()
 
@@ -154,7 +147,7 @@ class Nest:
 
     def set_mode(self, state):
         data = '{"target_temperature_type":"' + str(state) + '"}'
-        req = urllib2.Request(self.transport_url + "/v2/put/shared." + self.serial, data, {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4", "Authorization":"Basic " + self.access_token, "X-nl-protocol-version": "1"})
+        req = urllib2.Request(self.transport_url + "/v2/put/shared." + self.serial, data, self.headers)
 
         res = urllib2.urlopen(req).read()
 
@@ -172,10 +165,7 @@ class Nest:
 		print data
 
         req = urllib2.Request(self.transport_url + "/v2/put/structure." + self.structure_id,
-                              data,
-                              {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
-                               "Authorization":"Basic " + self.access_token,
-                               "X-nl-protocol-version": "1"})
+                              data, self.headers)
 
         res = urllib2.urlopen(req).read()
 
