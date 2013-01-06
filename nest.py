@@ -51,6 +51,36 @@ class Nest:
             res = json.read(res)
         return res
 
+    # context ['shared','structure','device']
+    def handle_put(self, context, data):
+        new_url = self.transport_url + "/v2/put/" + context + "."
+
+        if (context == "shared" or context == "device"):
+            new_url += self.serial
+        elif (context == "structure"):
+            new_url += self.structure_id
+        else:
+            print "Error:" + context+ " incorrect context sent to handle_put."
+            print " context ['shared','structure','device']"
+            res = None
+
+        req = urllib2.Request(new_url, data, self.headers)
+
+        res = urllib2.urlopen(req).read()
+
+        #TODO move print to debug and handle failures
+        print res
+	    # return res
+
+    def shared_put(self, data):
+        self.handle_put("shared", data)
+
+    def device_put(self, data):
+        self.handle_put("device", data)
+
+    def structure_put(self, data):
+        self.handle_put("structure", data)
+
     def login(self):
         data = urllib.urlencode({"username": self.username, "password": self.password})
 
@@ -125,12 +155,7 @@ class Nest:
         temp = self.temp_in(temp)
 
         data = '{"target_change_pending":true,"target_temperature":' + '%0.1f' % temp + '}'
-        req = urllib2.Request(self.transport_url + "/v2/put/shared." + self.serial,
-                              data, self.headers)
-
-        res = urllib2.urlopen(req).read()
-
-        print res
+        self.shared_put(data)
 
     def set_fan(self, state):
         data = '{"fan_mode":"' + str(state) + '"}'
@@ -138,20 +163,11 @@ class Nest:
 	if (self.debug):
 		print data
 
-        req = urllib2.Request(self.transport_url + "/v2/put/device." + self.serial,
-                              data, self.headers)
-
-        res = urllib2.urlopen(req).read()
-
-        print res
+        self.device_put(data)
 
     def set_mode(self, state):
         data = '{"target_temperature_type":"' + str(state) + '"}'
-        req = urllib2.Request(self.transport_url + "/v2/put/shared." + self.serial, data, self.headers)
-
-        res = urllib2.urlopen(req).read()
-
-        print res
+        self.shared_put(data)
 
     def set_away(self, state):
 	time_since_epoch   = time.time()
@@ -164,12 +180,7 @@ class Nest:
 	if (self.debug):
 		print data
 
-        req = urllib2.Request(self.transport_url + "/v2/put/structure." + self.structure_id,
-                              data, self.headers)
-
-        res = urllib2.urlopen(req).read()
-
-        print res
+        self.structure_put(data)
 
 def create_parser():
    parser = OptionParser(usage="nest [options] command [command_options] [command_args]",
