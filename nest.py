@@ -27,12 +27,12 @@ from optparse import OptionParser
 try:
     import json
 except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        print "No json library available. I recommend installing either python-json"
-        print "or simpejson."
-        sys.exit(-1)
+   try:
+       import simplejson as json
+   except ImportError:
+       print "No json library available. I recommend installing either python-json"
+       print "or simplejson. Python 2.6+ contains json library already."
+       sys.exit(-1)
 
 class Nest:
     def __init__(self, username, password, serial=None, index=0, units="F", debug=False):
@@ -42,6 +42,8 @@ class Nest:
         self.units = units
         self.index = index
         self.debug = debug
+        self.headers={"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
+                      "X-nl-protocol-version": "1"}
 
     def loads(self, res):
         if hasattr(json, "loads"):
@@ -50,27 +52,58 @@ class Nest:
             res = json.read(res)
         return res
 
+    # context ['shared','structure','device']
+    def handle_put(self, context, data):
+        assert context is not None, "Context must be set to ['shared','structure','device']"
+        assert data is not None, "Data is None"
+
+        new_url = self.transport_url + "/v2/put/" + context + "."
+
+        if (context == "shared" or context == "device"):
+            new_url += self.serial
+        elif (context == "structure"):
+            new_url += self.structure_id
+        else:
+            raise ValueError, context+ " is unsupported"
+
+
+        req = urllib2.Request(new_url, data, self.headers)
+
+        try:
+            urllib2.urlopen(req).read()
+        except urllib2.URLError:
+            print "Put operation failed"
+            if (self.debug):
+                print new_url
+                print data
+
+    def shared_put(self, data):
+        self.handle_put("shared", data)
+
+    def device_put(self, data):
+        self.handle_put("device", data)
+
+    def structure_put(self, data):
+        self.handle_put("structure", data)
+
     def login(self):
         data = urllib.urlencode({"username": self.username, "password": self.password})
 
         req = urllib2.Request("https://home.nest.com/user/login",
-                              data,
-                              {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4"})
+                              data, self.headers)
 
         res = urllib2.urlopen(req).read()
 
         res = self.loads(res)
 
         self.transport_url = res["urls"]["transport_url"]
-        self.access_token = res["access_token"]
         self.userid = res["userid"]
+        self.headers["Authorization"] = "Basic " + res["access_token"]
+        self.headers["X-nl-user-id"]= self.userid
 
     def get_status(self):
         req = urllib2.Request(self.transport_url + "/v2/mobile/user." + self.userid,
-                              headers={"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
-                                       "Authorization":"Basic " + self.access_token,
-                                       "X-nl-user-id": self.userid,
-                                       "X-nl-protocol-version": "1"})
+                              headers=self.headers)
 
         res = urllib2.urlopen(req).read()
 
@@ -107,6 +140,8 @@ class Nest:
         device = self.status["device"][self.serial]
         structure = self.status["structure"][self.structure_id]
 
+	#Delete the structure name so that we preserve the device name
+	del structure["name"]
         allvars = shared
 
         # Delete the structure name so that we preserve the device name
@@ -131,62 +166,25 @@ class Nest:
 
     def set_temperature(self, temp):
         temp = self.temp_in(temp)
-
         data = '{"target_change_pending":true,"target_temperature":' + '%0.1f' % temp + '}'
-        req = urllib2.Request(self.transport_url + "/v2/put/shared." + self.serial,
-                              data,
-                              {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
-                               "Authorization":"Basic " + self.access_token,
-                               "X-nl-protocol-version": "1"})
-
-        res = urllib2.urlopen(req).read()
-
-        print res
+        self.shared_put(data)
 
     def set_fan(self, state):
         data = '{"fan_mode":"' + str(state) + '"}'
-
-	if (self.debug):
-		print data
-
-        req = urllib2.Request(self.transport_url + "/v2/put/device." + self.serial,
-                              data,
-                              {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
-                               "Authorization":"Basic " + self.access_token,
-                               "X-nl-protocol-version": "1"})
-
-        res = urllib2.urlopen(req).read()
-
-        print res
+        self.device_put(data)
 
     def set_mode(self, state):
         data = '{"target_temperature_type":"' + str(state) + '"}'
-        req = urllib2.Request(self.transport_url + "/v2/put/shared." + self.serial, data, {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4", "Authorization":"Basic " + self.access_token, "X-nl-protocol-version": "1"})
-
-        res = urllib2.urlopen(req).read()
-
-        print res
+        self.shared_put(data)
 
     def set_away(self, state):
-	time_since_epoch   = time.time()
-	# time_since_epoch   = 1345299535
+        time_since_epoch   = time.time()
         if (state == "away"):
-		data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":true,"away_setter":0}'
-	else:
-        	data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":false,"away_setter":0}'
+            data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":true,"away_setter":0}'
+        else:
+            data = '{"away_timestamp":' + str(time_since_epoch) + ',"away":false,"away_setter":0}'
 
-	if (self.debug):
-		print data
-
-        req = urllib2.Request(self.transport_url + "/v2/put/structure." + self.structure_id,
-                              data,
-                              {"user-agent":"Nest/1.1.0.10 CFNetwork/548.0.4",
-                               "Authorization":"Basic " + self.access_token,
-                               "X-nl-protocol-version": "1"})
-
-        res = urllib2.urlopen(req).read()
-
-        print res
+        self.structure_put(data)
 
 def create_parser():
    parser = OptionParser(usage="nest [options] command [command_options] [command_args]",
@@ -236,6 +234,15 @@ def help():
     print "    nest.py --user joe@user.com --password swordfish temp 73"
     print "    nest.py --user joe@user.com --password swordfish fan auto"
 
+def validate_temp(temp):
+        try: 
+            new_temp = float(temp)
+        except ValueError:
+            return -1
+        if new_temp < 50 or new_temp > 90:
+            return -1
+        return new_temp
+            
 def main():
     parser = create_parser()
     (opts, args) = parser.parse_args()
@@ -260,17 +267,20 @@ def main():
     cmd = args[0]
 
     if (cmd == "temp"):
-        if len(args)<2:
-            print "please specify a temperature"
+        new_temp = -1
+        if len(args)>1:
+            new_temp = validate_temp(args[1])
+        if new_temp == -1:
+            print "please specify a temperature between 50 and 90"
             sys.exit(-1)
-        n.set_temperature(float(args[1]))
+        n.set_temperature(new_temp)
     elif (cmd == "fan"):
-        if len(args)<2:
+        if len(args)<2 or args[1] not in {"on", "auto"}:
             print "please specify a fan state of 'on' or 'auto'"
             sys.exit(-1)
         n.set_fan(args[1])
     elif (cmd == "mode"):
-        if len(args)<2:
+        if len(args)<2 or args[1] not in {"cool", "heat", "range"}:
             print "please specify a thermostat mode of 'cool', 'heat'  or 'range'"
             sys.exit(-1)
         n.set_mode(args[1])
@@ -281,6 +291,9 @@ def main():
     elif (cmd == "curhumid"):
         print n.status["device"][n.serial]["current_humidity"]
     elif (cmd == "away"):
+        if len(args)<2 or args[1] not in {"away", "here"}:
+            print "please specify a state of 'away' or 'here'"
+            sys.exit(-1)
         n.set_away(args[1])
     else:
         print "misunderstood command:", cmd
