@@ -193,9 +193,16 @@ class Nest:
 
         self.structure_put(data)
 
+    def set_auto_away(self, state):
+        if (state == "enable"):
+            data = '{"auto_away_enable":true}'
+        else:
+            data = '{"auto_away_enable":false}'
+        self.device_put(data)
+
 def create_parser():
    parser = OptionParser(usage="nest [options] command [command_options] [command_args]",
-        description="Commands: fan temp mode away",
+        description="Commands: fan temp mode away auto-away",
         version="unknown")
 
    parser.add_option("-u", "--user", dest="user",
@@ -221,21 +228,22 @@ def create_parser():
 def help():
     print "syntax: nest [options] command [command_args]"
     print "options:"
-    print "   --user <username>      ... username on nest.com"
-    print "   --password <password>  ... password on nest.com"
-    print "   --celsius              ... use celsius (the default is farenheit)"
-    print "   --serial <number>      ... optional, specify serial number of nest to use"
-    print "   --index <number>       ... optional, 0-based index of nest"
-    print "                                (use --serial or --index, but not both)"
+    print "   --user <username>          ... username on nest.com"
+    print "   --password <password>      ... password on nest.com"
+    print "   --celsius                  ... use celsius (the default is farenheit)"
+    print "   --serial <number>          ... optional, specify serial number of nest to use"
+    print "   --index <number>           ... optional, 0-based index of nest"
+    print "                                    (use --serial or --index, but not both)"
     print
     print "commands: temp, fan, away, mode, show, curtemp, curhumid"
-    print "    temp <temperature>    ... set target temperature"
-    print "    fan [auto|on]         ... set fan state"
-    print "    away [away|here]      ... set away state"
-    print "    mode [heat|cool|range]... set thermostat mode"
-    print "    show                  ... show everything"
-    print "    curtemp               ... print current temperature"
-    print "    curhumid              ... print current humidity"
+    print "    temp <temperature>        ... set target temperature"
+    print "    fan [auto|on]             ... set fan state"
+    print "    away [away|here]          ... set away state"
+    print "    auto-away [enable|disable]... enable or disable auto away"
+    print "    mode [heat|cool|range]    ... set thermostat mode"
+    print "    show                      ... show everything"
+    print "    curtemp                   ... print current temperature"
+    print "    curhumid                  ... print current humidity"
     print
     print "examples:"
     print "    nest.py --user joe@user.com --password swordfish temp 73"
@@ -302,14 +310,14 @@ def main():
             print "please specify a state of 'away' or 'here'"
             sys.exit(-1)
         n.set_away(args[1])
+    elif (cmd == "auto-away"):
+        if len(args)<2 or args[1] not in {"enable", "disable"}:
+            print "please specify a state of 'enable' or 'disable'"
+            sys.exit(-1)
+        n.set_auto_away(args[1])
     else:
         print "misunderstood command:", cmd
         print "do 'nest.py help' for help"
 
 if __name__=="__main__":
    main()
-
-
-
-
-
