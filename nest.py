@@ -173,12 +173,8 @@ class Nest:
 
 
     def show_fan_mode(self):
-        hvac_fan_state = self.status["shared"][self.serial]["hvac_fan_state"]
-        if hvac_fan_state:
-            fan_mode_print_value = "Fan On"
-        else:
-            fan_mode_print_value = "Fan Auto"
-        print fan_mode_print_value
+        fan_mode = self.status["device"][self.serial]["fan_mode"]
+        print fan_mode
 
     def set_temperature(self, temp):
         temp = self.temp_in(temp)
