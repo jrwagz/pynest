@@ -171,6 +171,15 @@ class Nest:
 
         print "%0.1f" % temp
 
+
+    def show_fan_mode(self):
+        hvac_fan_state = self.status["shared"][self.serial]["hvac_fan_state"]
+        if hvac_fan_state:
+            fan_mode_print_value = "Fan On"
+        else:
+            fan_mode_print_value = "Fan Auto"
+        print fan_mode_print_value
+
     def set_temperature(self, temp):
         temp = self.temp_in(temp)
         data = '{"target_change_pending":true,"target_temperature":' + '%0.1f' % temp + '}'
@@ -290,10 +299,13 @@ def main():
             sys.exit(-1)
         n.set_temperature(new_temp)
     elif (cmd == "fan"):
-        if len(args)<2 or args[1] not in {"on", "auto"}:
+        if len(args)==1:
+            n.show_fan_mode()
+        elif len(args)<2 or args[1] not in {"on", "auto"}:
             print "please specify a fan state of 'on' or 'auto'"
             sys.exit(-1)
-        n.set_fan(args[1])
+        else:
+            n.set_fan(args[1])
     elif (cmd == "mode"):
         if len(args)<2 or args[1] not in {"cool", "heat", "range"}:
             print "please specify a thermostat mode of 'cool', 'heat'  or 'range'"
